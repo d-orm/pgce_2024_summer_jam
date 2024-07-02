@@ -14,21 +14,19 @@ class GUI:
         self.init_bottom_panel()
         self.init_fact_surf()
         self.init_font()
-    
+
     def init_bottom_panel(self):
-        self.bottom_panel = pygame.Surface(
-            (self.app.screen_w, self.app.screen_h // 4), pygame.SRCALPHA
-        )
+        self.bottom_panel = pygame.Surface((self.app.screen_w, self.app.screen_h // 4))
         self.bottom_panel_colour = constants.BLUE
         self.bottom_panel.fill(self.bottom_panel_colour)
         self.bottom_panel_rect = self.bottom_panel.get_rect(
             topleft=(0, self.app.screen_h - self.app.screen_h // 4)
         )
-  
+
     def init_fact_surf(self):
         self.fact_surf = pygame.Surface(
             (self.app.screen_w, self.app.screen_h // 2), pygame.SRCALPHA
-        )
+        ).convert_alpha()
         self.fact_colour = constants.PURPLE
         self.fact_surf.fill(self.fact_colour)
         self.fact_rect = self.fact_surf.get_rect(

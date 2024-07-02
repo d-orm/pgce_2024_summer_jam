@@ -89,7 +89,7 @@ class Stars:
         )
 
     def init_bg(self):
-        self.background_surf = pygame.Surface(self.app.screen_size, pygame.SRCALPHA)
+        self.background_surf = pygame.Surface(self.app.screen_size)
         self.background_sizes = [
             random.randint(self.star_min_radius, self.star_max_radius)
             for _ in range(self.num_random_points)
