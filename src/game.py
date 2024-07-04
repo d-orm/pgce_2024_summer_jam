@@ -19,7 +19,7 @@ class Game:
         self.gui = GUI(self.app)
         self.start_const_points = 5
         self.start_rand_points = 50
-        self.max_level = 4
+        self.max_level = 42
         self.num_start_hints = 3
         self.max_constellation_points = 21
         self.max_random_points = 1000
@@ -117,7 +117,7 @@ class Game:
         ) / 1000
         self.current_time = current_time if not self.show_fact else self.current_time
 
-    def handle_click_event(self, event):
+    def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.show_fact:
                 self.continue_pressed = True

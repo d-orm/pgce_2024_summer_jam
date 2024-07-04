@@ -24,7 +24,7 @@ class App:
                     event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
                 ):
                     self.running = False
-                self.game.handle_click_event(event)
+                self.game.handle_events(event)
 
             self.game.update()
             self.game.draw(self.screen)
