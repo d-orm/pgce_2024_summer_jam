@@ -60,11 +60,12 @@ class Stars:
         screen.blit(self.reference_surf, self.reference_rect)
 
     def init_all_stars(self):
+        gui = self.app.game.gui
         self.random_points = [
             point
             for point in self.generate_random_points(self.num_random_points)
             if not self.constellation_rect.collidepoint(point)
-            and not self.app.gui.bottom_panel_rect.collidepoint(point)
+            and not gui.bottom_panel_rect.collidepoint(point)
         ]
         self.all_points = self.constellation_points + self.random_points
 
@@ -78,14 +79,13 @@ class Stars:
             ],
             constants.WHITE,
         )
+        pygame.draw.polygon(
+            self.reference_surf,
+            (255, 0, 0, 100),
+            self.reference_points,
+        )
         self.draw_connecting_lines(
             self.reference_surf, self.reference_points, constants.RED
-        )
-        self.draw_points(
-            self.reference_surf,
-            self.reference_points,
-            [self.star_min_radius for _ in range(self.num_constellation_points)],
-            constants.WHITE,
         )
 
     def init_bg(self):
@@ -103,6 +103,7 @@ class Stars:
         )
 
     def init_constellation(self):
+        gui = self.app.game.gui
         self.constellation_points = self.generate_random_shape_points(
             (
                 self.constellation_max_radius + self.star_max_radius * 2,
@@ -122,23 +123,22 @@ class Stars:
             self.app.screen_w - self.constellation_rect.w,
         ), random.randint(
             self.constellation_rect.h // 2,
-            self.app.gui.bottom_panel_rect.top - self.constellation_rect.h // 2,
+            gui.bottom_panel_rect.top - self.constellation_rect.h,
         )
         self.constellation_rect.center = self.constellation_center_pos
 
     def init_reference(self):
+        gui = self.app.game.gui
         self.reference_points = self.constellation_points.copy()
         self.reference_rect = self.constellation_rect.copy()
         self.reference_surf = self.constellation_surf.copy()
         self.reference_start_pos = (
-            self.app.screen_w // 2 - self.reference_rect.w // 2,
-            self.app.screen_h - self.reference_rect.h,
+            self.app.screen_w // 2 - gui.bottom_panel_rect.h // 2,
+            gui.bottom_panel_rect.top,
         )
-        self.reference_outline_rect = pygame.Rect(0, 0, 0, 0)
-        self.reference_outline_rect.w = self.app.gui.bottom_panel_rect.h
-        self.reference_outline_rect.h = self.app.gui.bottom_panel_rect.h
-        self.reference_outline_rect.centerx = self.app.screen_w // 2
-        self.reference_outline_rect.y = self.app.gui.bottom_panel_rect.top
+        self.reference_outline_rect = pygame.Rect(
+            *self.reference_start_pos, gui.bottom_panel_rect.h, gui.bottom_panel_rect.h
+        )
 
     def draw_reveal_surf(self, screen: pygame.Surface):
         pygame.draw.rect(
@@ -198,7 +198,12 @@ class Stars:
 
     def generate_random_points(self, n: int) -> list[tuple[int, int]]:
         return [
-            (random.randint(0, self.app.screen_w), random.randint(0, self.app.screen_h))
+            (
+                random.randint(0, self.app.screen_w),
+                random.randint(
+                    0, self.app.screen_h - self.app.game.gui.bottom_panel_rect.h
+                ),
+            )
             for _ in range(n)
         ]
 
