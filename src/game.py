@@ -17,21 +17,55 @@ class Game:
     def __init__(self, app: "App"):
         self.app = app
         self.gui = GUI(self.app)
-        self.start_const_points = 5
-        self.start_rand_points = 50
+        self.start_const_points = 4
+        self.start_rand_points = 25
         self.max_level = 42
         self.num_start_hints = 3
-        self.max_constellation_points = 21
-        self.max_random_points = 1000
+        self.max_constellation_points = 12
+        self.max_random_points = 200
         self.start_constellation_max_radius = self.app.screen_w // 12
         self.star_min_radius = self.app.screen_w // 400
         self.star_max_radius = self.app.screen_w // 200
         self.const_points_increment = 1
-        self.rand_points_increment = 25
+        self.rand_points_increment = 5
 
         self.constellation_max_radius = self.start_constellation_max_radius
         self.num_const_points = self.start_const_points
         self.num_rand_points = self.start_rand_points
+
+    def draw(self, screen: pygame.Surface):
+        screen.fill((0, 0, 0, 0))
+        self.stars.draw(screen)
+        self.gui.draw(screen)
+        if not self.game_complete:
+            self.stars.draw_reference(screen)
+
+        if self.show_hint or self.constellations_completed < 1 and not self.show_fact:
+            self.stars.draw_reveal_surf(screen)
+            if self.constellations_completed < 1:
+                self.gui.draw_instructions(screen)
+
+        if self.show_fact and not self.game_complete:
+            screen.blit(self.gui.fact_surf, self.gui.fact_rect)
+
+        if self.game_complete:
+            self.gui.draw_game_complete(screen)
+
+    def update(self):
+        self.handle_timer()
+
+        if self.is_dragging and not self.game_complete:
+            self.handle_reference_drag()
+
+        if self.stars.shapes_are_matched() and not self.is_dragging:
+            self.handle_shape_match()
+
+            if self.continue_pressed:
+                self.handle_fact_close()
+                self.increment_level()
+
+        elif not self.is_dragging:
+            self.stars.reset_reference_pos()
 
     def reset_level(self):
         self.seen_facts = set()
@@ -145,42 +179,4 @@ class Game:
 
         self.num_rand_points += self.rand_points_increment
 
-        if self.constellations_completed > 20:
-            self.constellation_max_radius = self.app.screen_w // 16
-        if self.constellations_completed > 40:
-            self.constellation_max_radius = self.app.screen_w // 24
-
         self.init_level()
-
-    def draw(self, screen: pygame.Surface):
-        self.stars.draw(screen)
-        self.gui.draw(screen)
-        if not self.game_complete:
-            self.stars.draw_reference(screen)
-
-        if self.show_hint or self.constellations_completed < 1 and not self.show_fact:
-            self.stars.draw_reveal_surf(screen)
-            if self.constellations_completed < 1:
-                self.gui.draw_instructions(screen)
-
-        if self.show_fact and not self.game_complete:
-            screen.blit(self.gui.fact_surf, self.gui.fact_rect)
-
-        if self.game_complete:
-            self.gui.draw_game_complete(screen)
-
-    def update(self):
-        self.handle_timer()
-
-        if self.is_dragging and not self.game_complete:
-            self.handle_reference_drag()
-
-        if self.stars.shapes_are_matched() and not self.is_dragging:
-            self.handle_shape_match()
-
-            if self.continue_pressed:
-                self.handle_fact_close()
-                self.increment_level()
-
-        elif not self.is_dragging:
-            self.stars.reset_reference_pos()

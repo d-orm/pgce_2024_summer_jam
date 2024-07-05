@@ -27,7 +27,7 @@ class Button:
         self.colour = colour
         self.text_colour = text_colour
         self.rect = pygame.Rect(x, y, width, height)
-        self.font_size = self.app.screen_w // 40
+        self.font_size = self.app.screen_w // 50
         self.font = pygame.font.Font(constants.FONT_PATH, self.font_size)
         self.clicked = False
 
@@ -132,7 +132,7 @@ class GUI:
         )
 
     def init_font(self):
-        self.font_size = self.app.screen_w // 40
+        self.font_size = self.app.screen_w // 50
         pygame.font.init()
         self.font = pygame.Font(constants.FONT_PATH, self.font_size)
 
@@ -143,7 +143,7 @@ class GUI:
         screen.blit(self.bottom_panel, self.bottom_panel_rect)
         text = self.font.render(
             (
-                f"Constellations completed: {self.app.game.constellations_completed}/{self.app.game.max_level}"
+                f"Level: {self.app.game.constellations_completed}/{self.app.game.max_level}"
                 f"\n\nCurrent Time: {self.app.game.current_time:.0f} seconds"
                 # f"\nFPS: {self.app.clock.get_fps():.0f}"
             ),
@@ -174,7 +174,7 @@ class GUI:
             text,
             (
                 self.fact_rect.centerx - text.get_width() // 2,
-                self.fact_rect.centery - text.get_height(),
+                self.fact_rect.top + text.get_height() // 2, 
             ),
         )
 

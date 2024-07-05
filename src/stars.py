@@ -31,7 +31,7 @@ class Stars:
             3, min(num_constellation_points, max_constellation_points)
         )
         self.num_random_points = max(3, min(num_random_points, max_random_points))
-        self.match_threshold = self.app.screen_w // 120
+        self.match_threshold = self.app.screen_w // 50
         self.init_constellation()
         self.init_reference()
         self.init_all_stars()
@@ -67,18 +67,23 @@ class Stars:
             if not self.constellation_rect.collidepoint(point)
             and not gui.bottom_panel_rect.collidepoint(point)
         ]
+        self.constellation_points = self.move_and_scale_points(
+            self.constellation_points,
+            self.constellation_center_pos,
+            1,
+        )        
         self.all_points = self.constellation_points + self.random_points
+        self.const_brightnesses = [random.uniform(0.005, 0.015) for _ in range(len(self.constellation_points))]
+        self.const_points_and_brightnesses = [
+            (*point, brightness) for point, brightness in zip(self.constellation_points, self.const_brightnesses)
+        ]
+        self.rand_brightnesses = [random.uniform(0.0005, 0.015) for _ in range(len(self.random_points))]
+        self.rand_points_and_brightnesses = [
+            (*point, brightness) for point, brightness in zip(self.random_points, self.rand_brightnesses)
+        ]
+
 
     def init_draw(self):
-        self.draw_points(
-            self.constellation_surf,
-            self.constellation_points,
-            [
-                random.randint(self.star_min_radius, self.star_max_radius)
-                for _ in range(self.num_constellation_points)
-            ],
-            constants.WHITE,
-        )
         pygame.draw.polygon(
             self.reference_surf,
             (255, 0, 0, 100),
@@ -89,18 +94,20 @@ class Stars:
         )
 
     def init_bg(self):
-        self.background_surf = pygame.Surface(self.app.screen_size)
+        self.background_surf = pygame.Surface(
+            (self.app.screen_size[0], self.app.screen_size[1] - self.app.game.gui.bottom_panel_rect.h),
+            pygame.SRCALPHA
+        )
+        self.background_surf.fill((0, 0, 0, 0))
         self.background_sizes = [
             random.randint(self.star_min_radius, self.star_max_radius)
             for _ in range(self.num_random_points)
         ]
-        self.background_surf.fill((0, 0, 0))
-        self.draw_points(
-            self.background_surf,
-            self.random_points,
-            self.background_sizes,
-            constants.WHITE,
-        )
+
+    def move_points(self, points, new_center):
+        dx = new_center[0] - points[0][0]
+        dy = new_center[1] - points[0][1]
+        return [(point[0] + dx, point[1] + dy) for point in points]
 
     def init_constellation(self):
         gui = self.app.game.gui
@@ -141,10 +148,11 @@ class Stars:
         )
 
     def draw_reveal_surf(self, screen: pygame.Surface):
+        rect = self.constellation_rect.inflate(self.star_max_radius*8, self.star_max_radius*8),
         pygame.draw.rect(
             screen,
             constants.GREEN,
-            self.constellation_rect,
+            rect,
             width=self.app.screen_w // 200,
             border_radius=self.app.screen_w // 24,
         )
@@ -196,13 +204,25 @@ class Stars:
 
         return pygame.Rect(min_x, min_y, max_x + min_x, max_y + min_y)
 
+    def move_and_scale_points(
+        self, points: list[tuple[int, int]], new_center: tuple, scale: float
+    ) -> list[tuple[int, int]]:
+        x_shift = new_center[0] - sum(x for x, y in points) / len(points)
+        y_shift = new_center[1] - sum(y for x, y in points) / len(points)
+
+        moved_scaled_points = [
+            ((x + x_shift) * scale, (y + y_shift) * scale) for x, y in points
+        ]
+
+        return moved_scaled_points
+    
     def generate_random_points(self, n: int) -> list[tuple[int, int]]:
         return [
             (
-                random.randint(0, self.app.screen_w),
-                random.randint(
+                float(random.randint(0, self.app.screen_w)),
+                float(random.randint(
                     0, self.app.screen_h - self.app.game.gui.bottom_panel_rect.h
-                ),
+                )),
             )
             for _ in range(n)
         ]
