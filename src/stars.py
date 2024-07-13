@@ -35,13 +35,8 @@ class Stars:
         self.init_constellation()
         self.init_reference()
         self.init_all_stars()
-        self.init_bg()
         self.reset_reference_pos()
         self.init_draw()
-
-    def draw(self, screen: pygame.Surface):
-        screen.blit(self.background_surf, (0, 0))
-        screen.blit(self.constellation_surf, self.constellation_rect)
 
     def draw_reference(self, screen: pygame.Surface):
         pygame.draw.rect(
@@ -71,17 +66,24 @@ class Stars:
             self.constellation_points,
             self.constellation_center_pos,
             1,
-        )        
+        )
         self.all_points = self.constellation_points + self.random_points
-        self.const_brightnesses = [random.uniform(0.005, 0.015) for _ in range(len(self.constellation_points))]
+        self.const_brightnesses = [
+            random.uniform(0.005, 0.015) for _ in range(len(self.constellation_points))
+        ]
         self.const_points_and_brightnesses = [
-            (*point, brightness) for point, brightness in zip(self.constellation_points, self.const_brightnesses)
+            (*point, brightness)
+            for point, brightness in zip(
+                self.constellation_points, self.const_brightnesses
+            )
         ]
-        self.rand_brightnesses = [random.uniform(0.0005, 0.015) for _ in range(len(self.random_points))]
+        self.rand_brightnesses = [
+            random.uniform(0.0005, 0.015) for _ in range(len(self.random_points))
+        ]
         self.rand_points_and_brightnesses = [
-            (*point, brightness) for point, brightness in zip(self.random_points, self.rand_brightnesses)
+            (*point, brightness)
+            for point, brightness in zip(self.random_points, self.rand_brightnesses)
         ]
-
 
     def init_draw(self):
         pygame.draw.polygon(
@@ -95,8 +97,11 @@ class Stars:
 
     def init_bg(self):
         self.background_surf = pygame.Surface(
-            (self.app.screen_size[0], self.app.screen_size[1] - self.app.game.gui.bottom_panel_rect.h),
-            pygame.SRCALPHA
+            (
+                self.app.screen_size[0],
+                self.app.screen_size[1] - self.app.game.gui.bottom_panel_rect.h,
+            ),
+            pygame.SRCALPHA,
         )
         self.background_surf.fill((0, 0, 0, 0))
         self.background_sizes = [
@@ -148,10 +153,14 @@ class Stars:
         )
 
     def draw_reveal_surf(self, screen: pygame.Surface):
-        rect = self.constellation_rect.inflate(self.star_max_radius*8, self.star_max_radius*8),
+        rect = (
+            self.constellation_rect.inflate(
+                self.star_max_radius * 8, self.star_max_radius * 8
+            ),
+        )
         pygame.draw.rect(
             screen,
-            constants.GREEN,
+            constants.LIGHT_GREEN,
             rect,
             width=self.app.screen_w // 200,
             border_radius=self.app.screen_w // 24,
@@ -215,14 +224,16 @@ class Stars:
         ]
 
         return moved_scaled_points
-    
+
     def generate_random_points(self, n: int) -> list[tuple[int, int]]:
         return [
             (
                 float(random.randint(0, self.app.screen_w)),
-                float(random.randint(
-                    0, self.app.screen_h - self.app.game.gui.bottom_panel_rect.h
-                )),
+                float(
+                    random.randint(
+                        0, self.app.screen_h - self.app.game.gui.bottom_panel_rect.h
+                    )
+                ),
             )
             for _ in range(n)
         ]

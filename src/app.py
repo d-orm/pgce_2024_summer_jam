@@ -8,66 +8,102 @@ import src.constants as constants
 from src.game import Game
 from src.shader_pipeline import ShaderPipeline
 
-def pack_array(data):
-    buffer = bytearray()
-    for item in data:
-        buffer.extend(struct.pack("f"*len(item), *item))
-    return buffer
 
 class App:
     def __init__(self):
         self.screen_size = self.screen_w, self.screen_h = constants.SCREEN_SIZE
-        self.screen = pygame.display.set_mode(self.screen_size, pygame.OPENGL | pygame.DOUBLEBUF).convert_alpha()
+        pygame.init()
+        self.screen = pygame.display.set_mode(
+            self.screen_size, pygame.OPENGL | pygame.DOUBLEBUF
+        ).convert_alpha()
         self.ctx = zengl.context()
         pygame.display.set_caption("Constellations")
         self.clock = pygame.time.Clock()
         self.game = Game(self)
         self.game.reset_level()
         self.game.init_level()
-        uniforms_map={
+        uniforms_map = {
             "iTime": {
                 "value": lambda: struct.pack("f", self.elapsed_time),
-                "glsl_type": "float"
-            }, 
+                "glsl_type": "float",
+            },
             "numRandomStars": {
                 "value": lambda: struct.pack("i", self.game.stars.num_random_points),
-                "glsl_type": "int"
+                "glsl_type": "int",
             },
             "constellationRect": {
-                "value": lambda: struct.pack("ffff", *self.game.stars.constellation_rect),
-                "glsl_type": "vec4"
-            },                                          
+                "value": lambda: struct.pack(
+                    "ffff", *self.game.stars.constellation_rect
+                ),
+                "glsl_type": "vec4",
+            },
         }
-        self.uniforms, self.ufs_size, self.ufs_includes = self.pack_uniforms(uniforms_map)
+        self.uniforms, self.ufs_size, self.ufs_includes = self.pack_uniforms(
+            uniforms_map
+        )
         self.uniform_buffer = self.ctx.buffer(size=self.ufs_size)
         self.ctx.includes["uniforms"] = self.ufs_includes["uniforms"]
         vec2_screen_size_str = f"vec2({self.screen_size[0]}.0, {self.screen_size[1]}.0)"
-        self.ctx.includes["iResolution"] = f"const vec2 iResolution = {vec2_screen_size_str};"
-        self.aurora_shader = ShaderPipeline(self, self.uniform_buffer, frag_shader_id="aurora", has_tex=False)
-        self.constellation_shader = ShaderPipeline(self, self.uniform_buffer, vert_shader_id="constellation", frag_shader_id="constellation", has_tex=False, instance_buffer_size=64000, instance_buffer_layout=("2f 1f /i", 0, 1), blend={
-                'enable': True, 
-                'src_color': "one", 
-                'dst_color': "one"
-            })
-        self.random_stars_shader = ShaderPipeline(self, self.uniform_buffer, vert_shader_id="constellation", frag_shader_id="random_stars", has_tex=False, instance_buffer_size=64000, instance_buffer_layout=("2f 1f /i", 0, 1))
+        self.ctx.includes["iResolution"] = (
+            f"const vec2 iResolution = {vec2_screen_size_str};"
+        )
+        self.space_bg_shader = ShaderPipeline(
+            self, self.uniform_buffer, frag_shader_id="space_bg", has_tex=False
+        )
+        self.aurora_shader = ShaderPipeline(
+            self, self.uniform_buffer, frag_shader_id="aurora", has_tex=False
+        )
+        self.constellation_shader = ShaderPipeline(
+            self,
+            self.uniform_buffer,
+            vert_shader_id="constellation",
+            frag_shader_id="constellation",
+            has_tex=False,
+            instance_buffer_size=64000,
+            instance_buffer_layout=("2f 1f /i", 0, 1),
+            blend={"enable": True, "src_color": "one", "dst_color": "one"},
+        )
+        self.random_stars_shader = ShaderPipeline(
+            self,
+            self.uniform_buffer,
+            vert_shader_id="constellation",
+            frag_shader_id="random_stars",
+            has_tex=False,
+            instance_buffer_size=64000,
+            instance_buffer_layout=("2f 1f /i", 0, 1),
+        )
         self.screen_shader = ShaderPipeline(self, self.uniform_buffer)
+        pygame.mixer.music.load(constants.MUSIC_PATH)
         self.running = True
 
     def render(self):
         self.update_uniforms()
         self.ctx.new_frame()
+
         self.aurora_shader.render()
+        self.space_bg_shader.render()
 
         points = self.game.stars.const_points_and_brightnesses
-        num_points = len(points)*3
-        self.constellation_shader.render(instance_data=struct.pack("f"*num_points, *[item for sublist in points for item in sublist]), instance_count=num_points//3)
+        num_points = len(points) * 3
+        self.constellation_shader.render(
+            instance_data=struct.pack(
+                "f" * num_points, *[item for sublist in points for item in sublist]
+            ),
+            instance_count=num_points // 3,
+        )
 
         rand_points = self.game.stars.rand_points_and_brightnesses
-        num_rand_points = len(rand_points)*3
-        self.random_stars_shader.render(instance_data=struct.pack("f"*num_rand_points, *[item for sublist in rand_points for item in sublist]), instance_count=num_rand_points//3)
+        num_rand_points = len(rand_points) * 3
+        self.random_stars_shader.render(
+            instance_data=struct.pack(
+                "f" * num_rand_points,
+                *[item for sublist in rand_points for item in sublist],
+            ),
+            instance_count=num_rand_points // 3,
+        )
 
         self.screen_shader.render(self.screen)
-        self.ctx.end_frame() 
+        self.ctx.end_frame()
         pygame.display.flip()
 
     async def run(self):
@@ -87,7 +123,7 @@ class App:
 
     def update_uniforms(self):
         for uniform in self.uniforms.values():
-            self.uniform_buffer.write(uniform['value'](), offset=uniform['offset'])   
+            self.uniform_buffer.write(uniform["value"](), offset=uniform["offset"])
 
     @staticmethod
     def pack_uniforms(uniforms_map: dict) -> tuple[dict, int, dict]:
@@ -95,28 +131,24 @@ class App:
         layout = ""
         offset = 0
         for uf_name, uf_data in uniforms_map.items():
-            if uf_data['glsl_type'] == 'float':
+            if uf_data["glsl_type"] == "float":
                 size = 4  # Size of a float in bytes
                 align = 4
-            elif uf_data['glsl_type'] == 'int':
+            elif uf_data["glsl_type"] == "int":
                 size = 4
-                align = 4                
-            elif uf_data['glsl_type'] == 'vec2':
+                align = 4
+            elif uf_data["glsl_type"] == "vec2":
                 size = 8  # 2 floats
                 align = 8
-            elif uf_data['glsl_type'] == 'vec3':
+            elif uf_data["glsl_type"] == "vec3":
                 size = 12  # 3 floats, but aligned as vec4 in std140 layout
                 align = 16
-            elif uf_data['glsl_type'] == 'vec4':
+            elif uf_data["glsl_type"] == "vec4":
                 size = 16  # 4 floats
                 align = 16
-            elif uf_data['glsl_type'] == 'mat4':
-                size = 64 # 4x4 floats
-                align = 16 # aligned as vec4 in std140 layout
-            elif uf_data['glsl_type'].startswith('float'):
-                array_size = int(uf_data['glsl_type'].split("[")[1].split("]")[0])
-                size = 16 * int(array_size)
-                align = 4
+            elif uf_data["glsl_type"] == "mat4":
+                size = 64  # 4x4 floats
+                align = 16  # aligned as vec4 in std140 layout
             else:
                 raise ValueError(f"Unknown GLSL type: {uf_data['glsl_type']}")
 
@@ -124,16 +156,12 @@ class App:
             if offset % align != 0:
                 offset += align - (offset % align)
 
-            uniforms[uf_name] = {
-                "value": uf_data['value'],
-                "offset": offset
-            }
+            uniforms[uf_name] = {"value": uf_data["value"], "offset": offset}
             offset += size
             layout += f"{uf_data['glsl_type']} {uf_name};\n"
 
-        includes = f'''
+        includes = f"""
                 layout (std140) uniform Common {{{layout if uniforms else 'float dummy;'}}};
-            ''' 
+            """
         buffer_size = 16 + offset
         return uniforms, buffer_size, {"uniforms": includes.strip()}
-    

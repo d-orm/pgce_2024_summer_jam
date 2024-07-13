@@ -10,7 +10,7 @@ in vec2 out_pos;
 in float out_bright;
 out vec4 fragColor;
 
-const vec2 smooth_edges = vec2(0.02); // Adjust this value to control the smooth transition width
+const vec2 smooth_edges = vec2(0.02); 
 
 float rect_falloff(vec2 uv, vec2 rect_min, vec2 rect_max) {
     vec2 dist_min = uv - rect_min;
@@ -19,11 +19,12 @@ float rect_falloff(vec2 uv, vec2 rect_min, vec2 rect_max) {
     return 1.0 - smoothstep(0.0, smooth_edges.x, dist);
 }
 
-float cheap_star(vec2 uv, float anim, float radius)
+float star(vec2 uv, float anim, float radius)
 {
+    // adapted from https://www.shadertoy.com/view/4tyfWy
+
     uv = abs(uv);
     
-    // Precompute the division to avoid repeated calculations
     vec2 uv_yx = uv.yx;
     vec2 uv_div = uv.xy / uv_yx;
     vec2 pos = min(uv_div, vec2(anim));
@@ -32,7 +33,6 @@ float cheap_star(vec2 uv, float anim, float radius)
     float p2 = p * p;
     float star_value = (2.0 + p * (p2 - 1.5)) / (uv.x + uv.y);
     
-    // Combine length calculation with smoothstep
     float dist_squared = dot(uv, uv);
     float radius_half = radius * 0.5;
     float radius_half_squared = radius_half * radius_half;
@@ -48,23 +48,18 @@ void main()
     vec2 uv = fragCoord;
     vec3 color = vec3(0.0);
     
-    // Normalize position and adjust UV coordinates
     vec2 pos = out_pos / iResolution.xy;
-    uv = (uv - pos) * (2.0 * (cos(iTime) - 11.5)); // Combined operations for efficiency
+    uv = (uv - pos) * (2.0 * (cos(iTime) - 11.5)); 
 
-    // Precompute frequently used values
     float radius = 25.25 * out_bright;
-    float anim = sin(iTime * 11.0) * 0.1 + 1.0;  // anim between 0.9 - 1.1 
+    float anim = sin(iTime * 11.0) * 0.1 + 1.0;
 
-    // Define the rectangle bounds (adjust these values as needed)
     vec2 rect_min = vec2(constellationRect[0], constellationRect[1]) / iResolution;
     vec2 rect_max = vec2(constellationRect[0] + constellationRect[2], constellationRect[1] + constellationRect[3]) / iResolution;
 
-    // Calculate visibility
     float visibility = rect_falloff(uv, rect_min, rect_max);
 
-    // Calculate star color and apply visibility
-    color = cheap_star(uv, anim, radius) * vec3(0.0514 + out_bright) * visibility;
+    color = star(uv, anim, radius) * vec3(0.0514 + out_bright) * visibility;
 
     fragColor = vec4(color, color);
 }

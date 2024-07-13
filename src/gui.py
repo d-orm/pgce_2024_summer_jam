@@ -67,17 +67,17 @@ class GUI:
         self.game_complete_surf = pygame.Surface(
             (self.app.screen_w // 2, self.app.screen_h // 3)
         )
-        self.game_complete_surf.fill(constants.WHITE)
+        self.game_complete_surf.fill(constants.LIGHT_GREEN)
         self.game_complete_rect = self.game_complete_surf.get_rect(
             center=(self.app.screen_w // 2, self.app.screen_h // 2)
         )
         text_surf = self.font.render(
-            "Congratulations!" "",
+            "Congratulations!",
             True,
             constants.BLACK,
         )
         text_surf_2 = self.font.render(
-            "You completed the game!" "",
+            f"You completed the game!",
             True,
             constants.BLACK,
         )
@@ -132,7 +132,7 @@ class GUI:
         )
 
     def init_font(self):
-        self.font_size = self.app.screen_w // 50
+        self.font_size = self.app.screen_w // 40
         pygame.font.init()
         self.font = pygame.Font(constants.FONT_PATH, self.font_size)
 
@@ -174,13 +174,32 @@ class GUI:
             text,
             (
                 self.fact_rect.centerx - text.get_width() // 2,
-                self.fact_rect.top + text.get_height() // 2, 
+                self.fact_rect.centery - text.get_height(),
+            ),
+        )
+
+    def draw_arrow_surf(self, surf: pygame.Surface, center_x: int, center_y: int):
+        size = self.app.screen_w // 40
+        arrow_points = [
+            (center_x - size, center_y - size),
+            (center_x + size, center_y - size),
+            (center_x, center_y + size),
+        ]
+        pygame.draw.polygon(surf, constants.LIGHT_GREEN, arrow_points, width=0)
+        pygame.draw.rect(
+            surf,
+            constants.LIGHT_GREEN,
+            (
+                center_x - size // 2 + size // 4,
+                center_y - size * 2,
+                size // 2,
+                size * 2,
             ),
         )
 
     def draw_instructions(self, screen: pygame.Surface):
         text = self.font.render(
-            "Drag the reference shape to match the constellation!",
+            "Click and drag the reference shape to match the constellation!",
             True,
             constants.LIGHT_GREEN,
         )
@@ -201,4 +220,8 @@ class GUI:
                 self.app.screen_w // 2 - text.get_width() // 2,
                 self.bottom_panel_rect.top - text.get_height(),
             ),
+        )
+
+        self.draw_arrow_surf(
+            screen, self.app.screen_w // 2, self.bottom_panel_rect.top // 0.9
         )

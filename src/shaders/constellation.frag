@@ -10,11 +10,12 @@ in vec2 out_pos;
 in float out_bright;
 out vec4 fragColor;
 
-float cheap_star(vec2 uv, float anim, float radius)
+float star(vec2 uv, float anim, float radius)
 {
+    // adapted from https://www.shadertoy.com/view/4tyfWy
+    
     uv = abs(uv);
     
-    // Precompute the division to avoid repeated calculations
     vec2 uv_yx = uv.yx;
     vec2 uv_div = uv.xy / uv_yx;
     vec2 pos = min(uv_div, vec2(anim));
@@ -23,7 +24,6 @@ float cheap_star(vec2 uv, float anim, float radius)
     float p2 = p * p;
     float star_value = (2.0 + p * (p2 - 1.5)) / (uv.x + uv.y);
     
-    // Combine length calculation with smoothstep
     float dist_squared = dot(uv, uv);
     float radius_half = radius * 0.5;
     float radius_half_squared = radius_half * radius_half;
@@ -44,7 +44,7 @@ void main()
     uv *= 2.0 * ( cos(iTime * 1.0) -11.5); // scale
     float radius = 15.25 * out_bright;
     float anim = sin(iTime * 11.0) * 0.1 + 1.0;  // anim between 0.9 - 1.1 
-    color = cheap_star(uv, anim, radius) * vec3(0.0214 + out_bright);
+    color = star(uv, anim, radius) * vec3(0.0214 + out_bright);
 
    
     fragColor = vec4(color, color);

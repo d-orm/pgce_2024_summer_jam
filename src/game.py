@@ -21,21 +21,24 @@ class Game:
         self.start_rand_points = 25
         self.max_level = 42
         self.num_start_hints = 3
-        self.max_constellation_points = 12
-        self.max_random_points = 200
+        self.max_constellation_points = 8
+        self.max_random_points = 100
         self.start_constellation_max_radius = self.app.screen_w // 12
         self.star_min_radius = self.app.screen_w // 400
         self.star_max_radius = self.app.screen_w // 200
         self.const_points_increment = 1
-        self.rand_points_increment = 5
+        self.rand_points_increment = 3
 
         self.constellation_max_radius = self.start_constellation_max_radius
         self.num_const_points = self.start_const_points
         self.num_rand_points = self.start_rand_points
+        self.const_complete_sound = pygame.mixer.Sound(
+            constants.CONST_COMPLETE_SOUND_PATH
+        )
+        self.music_started = False
 
     def draw(self, screen: pygame.Surface):
         screen.fill((0, 0, 0, 0))
-        self.stars.draw(screen)
         self.gui.draw(screen)
         if not self.game_complete:
             self.stars.draw_reference(screen)
@@ -109,6 +112,7 @@ class Game:
         )
         self.seen_facts.add(self.fact)
         self.gui.draw_fact(self.fact)
+        self.complete_sound_played = False
 
     def handle_reference_drag(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -136,6 +140,9 @@ class Game:
         self.fact_display_duration += pygame.time.get_ticks() - self.fact_start_time
 
     def handle_shape_match(self):
+        if not self.complete_sound_played:
+            self.const_complete_sound.play()
+            self.complete_sound_played = True
         if not self.show_fact and not self.game_complete:
             self.constellations_completed += 1
 
@@ -158,6 +165,10 @@ class Game:
 
             self.is_dragging = True
             self.start_drag_x, self.start_drag_y = event.pos
+
+            if not self.music_started:
+                pygame.mixer.music.play(-1)
+                self.music_started = True
 
             if self.gui.show_hint_button.is_clicked(event.pos):
                 self.handle_hint_click()
